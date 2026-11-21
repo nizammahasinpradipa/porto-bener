@@ -349,7 +349,7 @@ function createStrapTexture(): THREE.CanvasTexture {
 }
 
 const DESKTOP_ANCHOR_Y = 4.43;
-const MOBILE_ANCHOR_Y = 5.32;
+const MOBILE_ANCHOR_Y = 6.22;
 const SPRING_REST_LEN = 0.2;
 const SPRING_STIFFNESS = 68;
 const SPRING_DAMPING = 9.5;
@@ -401,10 +401,19 @@ function Band({
   const { size, viewport, gl, camera } = useThree();
 
   // On desktop (lg >= 1024px) anchor cleanly in the left half of the full-viewport canvas;
-  // on mobile/tablet center horizontally in the upper hero space above the title.
+  // on mobile/tablet pull the camera back slightly so the badge stays compact in the upper
+  // 43% of the screen well above the hero text, with generous horizontal swing room.
   const isDesktop = size.width >= 1024;
   const anchorX = isDesktop ? -Math.min(viewport.width * 0.225, 2.35) : 0;
   const baseAnchorY = isDesktop ? DESKTOP_ANCHOR_Y : MOBILE_ANCHOR_Y;
+
+  useEffect(() => {
+    const targetZ = isDesktop ? 14 : 17.5;
+    if (Math.abs(camera.position.z - targetZ) > 0.01) {
+      camera.position.set(0, 0, targetZ);
+      camera.updateProjectionMatrix();
+    }
+  }, [isDesktop, camera]);
 
   // Capture initial spawn anchor once so mount positions stay aligned on frame 0
   const initialAnchorX = useRef(anchorX);
@@ -1278,7 +1287,10 @@ export default function Lanyard3D({ eventSource, active = true }: Lanyard3DProps
       </svg>
 
       <Canvas
-        camera={{ position: [0, 0, 14], fov: 24 }}
+        camera={{
+          position: [0, 0, typeof window !== 'undefined' && window.innerWidth < 1024 ? 17.5 : 14],
+          fov: 24,
+        }}
         dpr={[1, 2]}
         eventSource={eventSource as React.RefObject<HTMLElement> | undefined}
         eventPrefix="client"

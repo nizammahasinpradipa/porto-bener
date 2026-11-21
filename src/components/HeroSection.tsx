@@ -44,7 +44,10 @@ export function HeroSection({
                 <StaticBadge />
               </div>
             ) : (
-              <div className="h-[410px] sm:h-[480px] lg:h-[620px] w-full" aria-hidden="true" />
+              <div
+                className="h-[44svh] min-h-[340px] max-h-[430px] sm:h-[460px] lg:h-[620px] lg:max-h-none w-full"
+                aria-hidden="true"
+              />
             )}
           </div>
 
