@@ -106,12 +106,10 @@ export function PageLoader({ onReveal }: PageLoaderProps) {
           role="status"
           aria-live="polite"
           aria-label={`Loading MyPorto, ${progress} percent`}
-          initial={{ y: '0%', opacity: 1, filter: 'blur(0px)' }}
+          initial={{ opacity: 1 }}
           exit={{
-            y: '-100%',
-            opacity: 0.95,
-            filter: 'blur(2.5px)',
-            transition: { duration: 0.72, ease: [0.76, 0, 0.24, 1] },
+            opacity: 0,
+            transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
           }}
           className="fixed inset-0 z-[100] flex flex-col justify-between overflow-hidden bg-[#0a0a0a] py-8 sm:py-10 select-none"
         >
