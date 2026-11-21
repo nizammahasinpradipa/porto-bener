@@ -1,65 +1,24 @@
 'use client';
 
-import React, { Component, useEffect, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
+import React, { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowDownRight } from 'lucide-react';
 import { StaticBadge } from './StaticBadge';
 
-const Lanyard3D = dynamic(() => import('./Lanyard3D'), {
-  ssr: false,
-  loading: () => null,
-});
-
 const SKILLS = ['UI/UX', 'Design', 'Frontend'] as const;
-
-class WebGLErrorBoundary extends Component<
-  { fallback: React.ReactNode; children: React.ReactNode },
-  { hasError: boolean }
-> {
-  constructor(props: { fallback: React.ReactNode; children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    if (this.state.hasError) return this.props.fallback;
-    return this.props.children;
-  }
-}
 
 interface HeroSectionProps {
   isRevealed?: boolean;
+  showStaticFallback?: boolean;
 }
 
-export function HeroSection({ isRevealed = true }: HeroSectionProps) {
+export function HeroSection({
+  isRevealed = true,
+  showStaticFallback = false,
+}: HeroSectionProps) {
   const prefersReducedMotion = useReducedMotion();
-  const heroRef = useRef<HTMLElement>(null);
   const [activeSkill, setActiveSkill] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [canUseWebGL, setCanUseWebGL] = useState<boolean | null>(null);
-
-  // Check WebGL support on mount; show StaticBadge only when reduced motion or no WebGL
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      setCanUseWebGL(false);
-      return;
-    }
-    try {
-      const canvas = document.createElement('canvas');
-      const gl =
-        canvas.getContext('webgl2') ||
-        canvas.getContext('webgl') ||
-        canvas.getContext('experimental-webgl');
-      setCanUseWebGL(Boolean(gl));
-    } catch {
-      setCanUseWebGL(false);
-    }
-  }, [prefersReducedMotion]);
 
   // Cycle active mastery skill every 3 seconds
   useEffect(() => {
@@ -72,38 +31,20 @@ export function HeroSection({ isRevealed = true }: HeroSectionProps) {
 
   return (
     <section
-      ref={heroRef}
       id="home"
       aria-label="Introduction"
-      className="relative min-h-[100svh] flex flex-col lg:flex-row lg:items-center pt-16 pb-12 sm:pt-20 lg:py-0 overflow-x-clip"
+      className="relative min-h-[100svh] flex flex-col lg:flex-row lg:items-center pt-16 pb-12 sm:pt-20 lg:py-0"
     >
-      {/* Full-width 3D Lanyard layer:
-          - Desktop (lg+): covers the ENTIRE hero viewport so dragging far left or far right never clips
-          - Mobile/tablet: full viewport width across top above the text */}
-      {canUseWebGL === true && (
-        <div className="relative w-full h-[460px] sm:h-[540px] lg:absolute lg:inset-0 lg:h-full z-20 pointer-events-none">
-          <WebGLErrorBoundary
-            fallback={
-              <div className="pointer-events-auto flex h-full w-full lg:w-1/2 items-center justify-center">
-                <StaticBadge />
-              </div>
-            }
-          >
-            <Lanyard3D eventSource={heroRef} active={isRevealed} />
-          </WebGLErrorBoundary>
-        </div>
-      )}
-
       <div className="page-wrap relative z-10 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left Column spacer (or StaticBadge when WebGL/motion is disabled) */}
+          {/* Left Column spacer for the full-viewport 3D Lanyard (or StaticBadge fallback) */}
           <div className="lg:col-span-6 flex items-center justify-center">
-            {canUseWebGL === false ? (
+            {showStaticFallback ? (
               <div className="h-[420px] sm:h-[480px] flex items-center justify-center">
                 <StaticBadge />
               </div>
             ) : (
-              <div className="hidden lg:block h-[620px]" aria-hidden="true" />
+              <div className="h-[410px] sm:h-[480px] lg:h-[620px] w-full" aria-hidden="true" />
             )}
           </div>
 

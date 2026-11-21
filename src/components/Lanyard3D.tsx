@@ -348,7 +348,8 @@ function createStrapTexture(): THREE.CanvasTexture {
   return tex;
 }
 
-const ANCHOR_Y = 4.45;
+const DESKTOP_ANCHOR_Y = 4.43;
+const MOBILE_ANCHOR_Y = 5.32;
 const SPRING_REST_LEN = 0.2;
 const SPRING_STIFFNESS = 68;
 const SPRING_DAMPING = 9.5;
@@ -399,18 +400,21 @@ function Band({
 
   const { size, viewport, gl, camera } = useThree();
 
-  // On desktop (lg >= 1024px) anchor cleanly in the left half of the full-hero canvas;
-  // on mobile/tablet center horizontally while still spanning full viewport width.
+  // On desktop (lg >= 1024px) anchor cleanly in the left half of the full-viewport canvas;
+  // on mobile/tablet center horizontally in the upper hero space above the title.
   const isDesktop = size.width >= 1024;
   const anchorX = isDesktop ? -Math.min(viewport.width * 0.225, 2.35) : 0;
+  const baseAnchorY = isDesktop ? DESKTOP_ANCHOR_Y : MOBILE_ANCHOR_Y;
 
-  // Capture initial spawn X once so mount positions stay stable on first frame
+  // Capture initial spawn anchor once so mount positions stay aligned on frame 0
   const initialAnchorX = useRef(anchorX);
+  const initialAnchorY = useRef(baseAnchorY);
+  const smoothScrollY = useRef(typeof window !== 'undefined' ? window.scrollY : 0);
 
   const dragPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), []);
   const hitPoint = useMemo(() => new THREE.Vector3(), []);
   const targetPos = useMemo(() => new THREE.Vector3(), []);
-  const anchorPos = useMemo(() => new THREE.Vector3(anchorX, ANCHOR_Y, 0), [anchorX]);
+  const anchorPos = useMemo(() => new THREE.Vector3(anchorX, baseAnchorY, 0), [anchorX, baseAnchorY]);
   const tmpVec = useMemo(() => new THREE.Vector3(), []);
   const ang = useMemo(() => new THREE.Vector3(), []);
   const rot = useMemo(() => new THREE.Vector3(), []);
@@ -503,13 +507,16 @@ function Band({
     [0, 1.5, 0],
   ]);
 
-  // Keep fixed anchor aligned smoothly when resizing between mobile and desktop
+  // Keep fixed anchor aligned horizontally when resizing between mobile and desktop
   useEffect(() => {
     if (fixed.current) {
-      fixed.current.setTranslation({ x: anchorX, y: ANCHOR_Y, z: 0 }, true);
+      const worldPerPx = viewport.height / Math.max(1, size.height);
+      const liveY = baseAnchorY + smoothScrollY.current * worldPerPx;
+      anchorPos.set(anchorX, liveY, 0);
+      fixed.current.setTranslation({ x: anchorX, y: liveY, z: 0 }, true);
       [j1, j2, j3, card].forEach((ref) => ref.current?.wakeUp());
     }
-  }, [anchorX]);
+  }, [anchorX, baseAnchorY, viewport.height, size.height, anchorPos]);
 
   useEffect(() => {
     onDragStateChange(Boolean(dragOffset));
@@ -642,6 +649,18 @@ function Band({
     const dt = Math.max(0.004, Math.min(delta, 0.04));
 
     if (!active) return;
+
+    // Move the top anchor smoothly in lockstep with page scroll so the lanyard scrolls
+    // naturally with the Hero section while remaining completely unclipped across the whole viewport.
+    if (fixed.current) {
+      const targetScroll = typeof window !== 'undefined' ? window.scrollY : 0;
+      const scrollDiff = targetScroll - smoothScrollY.current;
+      smoothScrollY.current += scrollDiff * Math.min(1, dt * 18);
+      const worldPerPx = viewport.height / Math.max(1, size.height);
+      const liveAnchorY = baseAnchorY + smoothScrollY.current * worldPerPx;
+      anchorPos.set(anchorX, liveAnchorY, 0);
+      fixed.current.setTranslation({ x: anchorX, y: liveAnchorY, z: 0 }, true);
+    }
 
     // Initial drop-from-top entrance impulse with slight sway & 3D twist once loader lifts
     if (!hasDroppedIn.current && card.current) {
@@ -975,7 +994,7 @@ function Band({
   return (
     <>
       {/* Spawn above the top edge with zero initial joint stress so it falls cleanly into frame */}
-      <group position={[initialAnchorX.current, ANCHOR_Y, 0]}>
+      <group position={[initialAnchorX.current, initialAnchorY.current, 0]}>
         <RigidBody ref={fixed} {...ropeSegmentProps} type="fixed" />
         <RigidBody position={[0.28, 0.52, 0]} ref={j1} {...ropeSegmentProps} type="dynamic">
           <BallCollider args={[0.1]} mass={0.45} />
