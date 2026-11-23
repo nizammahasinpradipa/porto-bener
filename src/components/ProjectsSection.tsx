@@ -34,15 +34,20 @@ export function ProjectsSection() {
   const getCollageClass = (project: ProjectItem, index: number) => {
     if (filter === 'All') {
       if (project.aspect === 'landscape') {
-        return 'lg:col-span-6 lg:mt-14';
+        return index === 0 ? 'lg:col-span-8 lg:mt-6' : 'lg:col-span-8 lg:mt-10';
       }
-      return index === 0 ? 'lg:col-span-3' : 'lg:col-span-3 lg:mt-6';
+      return 'lg:col-span-4';
     }
     if (filter === 'Posters') {
-      return index === 0 ? 'lg:col-span-5 lg:col-start-2' : 'lg:col-span-5 lg:mt-10';
+      return index % 2 === 0 ? 'lg:col-span-5 lg:col-start-2' : 'lg:col-span-5 lg:mt-10';
     }
-    return 'lg:col-span-8 lg:col-start-3';
+    if (visibleProjects.length === 1) {
+      return 'lg:col-span-8 lg:col-start-3';
+    }
+    return index % 2 === 0 ? 'lg:col-span-6' : 'lg:col-span-6 lg:mt-10';
   };
+
+  const archiveRange = `01–${String(PROJECTS.length).padStart(2, '0')}`;
 
   return (
     <section
@@ -55,7 +60,7 @@ export function ProjectsSection() {
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div>
             <p className="text-[13px] font-medium uppercase tracking-[0.2em] text-[#a3a3a3]">
-              Archive · 01–03
+              Archive · {archiveRange}
             </p>
             <h2
               id="projects-heading"
