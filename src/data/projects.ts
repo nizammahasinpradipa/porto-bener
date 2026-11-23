@@ -19,7 +19,7 @@ export const PROJECTS: ProjectItem[] = [
     title: 'The Daily Monochrome',
     type: 'Website',
     year: '2026',
-    image: '/projects/website-daily-monochrome.png',
+    image: '/projects/website-daily-monochrome.jpg',
     aspect: 'landscape',
     description:
       'Print-inspired monochrome broadsheet news app with live RSS wires, weather report, daily agenda, and a playable mini crossword.',
